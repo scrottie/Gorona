@@ -1,17 +1,30 @@
+Gorona(3)             User Contributed Perl Documentation            Gorona(3)
 
 
 
 NAME
-       Gorona - Coro based PSGI web server... for Gopher
+       Gorona - Coro based PSGI web server... for Gopher (with apologies to
+       Miyagawa and his Corona)
 
 SYNOPSIS
          gorona app.psgi
 
 DESCRIPTION
-       XXX todo: use Coro::AIO (and IO::AIO) if available, to send the static
+       Gopher has long been the preferred hypertext protocol, offering rich
+       media, metadata annotation, rich forms, accessibility, high
+       performance, fantastic content, and a lack of utterly bullshit content
+       such as <http://myspace.com>, but has thus far been lacking is a
+       generic stack for mounting dynamic applications.  Enter Gorona, the
+       first Rack inspired server for Gopher.
+
+       Since Gopher is essentially a superset of HTML/HTTP except for the
+       stupid parts, goronaiaing up your existing Web app should just work
+       (note:  JavaScript support is not implemented at this time).
+
+       Uses Coro::AIO (and IO::AIO) if available, to send the static
        filehandle using sendfile(2).
 
-       XXX todo:  set "psgi.multithread" env var on.
+       Sets "psgi.multithread" env var on.
 
 HISTORY
        Original version; created by h2xs 1.23 with options
@@ -28,3 +41,7 @@ LICENSE
 
 SEE ALSO
        A professional.
+
+
+
+perl v5.12.3                      2011-06-01                         Gorona(3)

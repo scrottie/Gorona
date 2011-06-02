@@ -15,6 +15,8 @@ o. handle cookies by turning them into cgi-like args and adding them to the requ
 o. what happens if we don't have AIO and it is a real filehandle?  in that case, it looks like we try to send the fh as text
 o. in case of a HEAD request, actually send the HTTP header key/value pairs as the document; also send +ADMIN and +INFO blocks as required
 o. special handing for Net::Gopher::Response::MenuItem objects in the body array?
+o. it's popular to use figlets to make section headings on gopher pages
+   I should have it automatically run figlets to mark up HTML <h1> and <h2>'s   
 
 Done-ish:
 
@@ -89,8 +91,8 @@ warn "request uri: ``$request[0]''";
     # with URL:, it will write out a HTML document that will send the
     # non-compliant browser to the appropriate place.
 
-    if( $request[0] =~ m/^URL:/ ) {
-        (my $url = $request[0]) =~ s{^URL:}{};
+    if( $request[0] =~ m/^UR[LI]:/ ) {
+        (my $url = $request[0]) =~ s{^UR[LI]:}{};
         my $html = qq{
             <HTML>
             <HEAD>
@@ -421,7 +423,7 @@ sub translate_html {
                        #         URL:http://www.complete.org/
                        # Host, Port -- pointing back to the gopher server that provided
                        # the directory for compatibility reasons.
-                       $output .= "h" . $last_bit_of_text . "\t" . "URI:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n";
+                       $output .= "h" . $last_bit_of_text . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n";
                    }
                }
            } elsif( $tag eq 'img' and $attr->{src} ) {

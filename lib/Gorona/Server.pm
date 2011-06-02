@@ -388,6 +388,7 @@ sub translate_html {
                return if $style;
                my $text = shift;
                $text =~ s{<!--.*?-->}{}sg; # JavaScript, mostly
+               $text =~ s{\t}{    }sg;
                return if $text =~ m/^\s*$/;
 # warn "text: $text";
                ( $last_bit_of_text = $text ) =~ s{[\r\n\t]}{ }g;
@@ -437,7 +438,7 @@ sub translate_html {
     my $p = HTML::Parser->new(
        api_version => 3,
        handlers => { 
-           text =>  [ $cb, "event,text"],
+           text =>  [ $cb, "event,dtext"],
            start => [ $cb, "event,tag,attr,text"],
            end =>   [ $cb, "event,tag"],
            comment => [ sub { }, 'event'],

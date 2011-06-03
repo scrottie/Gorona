@@ -34,6 +34,14 @@ use HTML::Parser;
 use Scalar::Util;
 use List::Util qw(sum max);
 use Text::Wrap;
+use Text::FIGlet;
+use Config;
+
+# figure out where the figlet fonts are
+
+my $sharedir = $Config{scriptdir};
+$sharedir =~ s{/bin$}{/share};
+my $figletfontdir = "$sharedir/figlet/";
 
 my %forms;
 my $hostname = `hostname`; chomp $hostname;
@@ -391,9 +399,12 @@ sub translate_html {
                $text =~ s{\t}{    }sg;
                return if $text =~ m/^\s*$/;
 # warn "text: $text";
-               ( $last_bit_of_text = $text ) =~ s{[\r\n\t]}{ }g;
+               $last_bit_of_text = $text;
+               $last_bit_of_text =~ s{[\r\n\t]}{ }g;
 # warn "last_bit_of_text: $last_bit_of_text";
-               $output .= join '', map "i$_\t\t\t\r\n", split m/\r?\n/, Text::Wrap::wrap('', '', $text);
+               if( ! $pending_href ) {
+                   $output .= join '', map "i$_\t\t\t\r\n", split m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text); # information menu item (just text; not a link itself)
+               }
 # warn "appending text: " . join '', map "i$_\r\n", split m/\r?\n/, Text::Wrap::wrap('', '', $text);
                return;
            }
@@ -403,6 +414,16 @@ sub translate_html {
                $style = 1; # ignore text
            } elsif( $tag eq '/style' or $tag eq '/script' ) {
                $style = 0;
+           } elsif( $tag eq '/h1' or $tag eq '/h2' ) {
+               my @text;
+               my $font = $tag eq '/h1' ? "$figletfontdir/big.flf" : "$figletfontdir/chunky.flf";
+               if( -e $font ) {
+                   my $figlet = Text::FIGlet->new( -f => $font );
+                   @text = split m/\r?\n/, $figlet->figify( -A => $last_bit_of_text );
+               } else {
+                   @text = ('=' x 78, split(m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text)), '=' x 78);
+               }
+               $output .= join '', map "i$_\t\t\t\r\n", @text;  # informational menu items (doesn't link anywhere)
            } elsif( $tag eq 'a' and $attr->{href} ) {
 # use Data::Dumper; warn Data::Dumper::Dumper($attr);
                $pending_href = $attr;
@@ -410,12 +431,14 @@ sub translate_html {
                # XXX actually take the servername and port off of the href
                my $href = $pending_href->{href};
                return if $href =~ m/^#/;
+               # XXX normalize relative links
+               my @text = split m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text);
                if( $href =~ m{^/} ) {
-                   $output .= "1" . $last_bit_of_text . "\t" . $href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n";
+                   $output .= "1" . $_ . "\t" . $href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                } else {
                    my $uri = URI->new($href);
                    if( $uri->host eq $servername ) {
-                       $output .= "1" . $last_bit_of_text . "\t" . $uri->path . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n";
+                       $output .= "1" . $_ . "\t" . $uri->path . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                    } else {
                        # from http://gopher.quux.org:70/Archives/Mailing%20Lists/gopher/gopher.2002-02%3F/MBOX-MESSAGE/34 :
                        # Type -- the appropriate character corresponding to the type of the
@@ -424,7 +447,7 @@ sub translate_html {
                        #         URL:http://www.complete.org/
                        # Host, Port -- pointing back to the gopher server that provided
                        # the directory for compatibility reasons.
-                       $output .= "h" . $last_bit_of_text . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n";
+                       $output .= "h" . $_ . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                    }
                }
            } elsif( $tag eq 'img' and $attr->{src} ) {

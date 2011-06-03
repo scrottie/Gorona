@@ -52,4 +52,7 @@ at your option, any later version of Perl 5 you may have available.
 
 =head1 SEE ALSO
 
+L<http://gopher.floodgap.com/overbite/> -- a Gopher plugin for Firefox
+
 A professional.
+

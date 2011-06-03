@@ -403,6 +403,7 @@ sub translate_html {
                $last_bit_of_text =~ s{[\r\n\t]}{ }g;
 # warn "last_bit_of_text: $last_bit_of_text";
                if( ! $pending_href ) {
+                   # don't output text if there's a pending href as the /href will render the text as the link
                    $output .= join '', map "i$_\t\t\t\r\n", split m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text); # information menu item (just text; not a link itself)
                }
 # warn "appending text: " . join '', map "i$_\r\n", split m/\r?\n/, Text::Wrap::wrap('', '', $text);
@@ -450,6 +451,7 @@ sub translate_html {
                        $output .= "h" . $_ . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                    }
                }
+               $pending_href = undef;
            } elsif( $tag eq 'img' and $attr->{src} ) {
                $output .= "I" . $last_bit_of_text . ' ' . ($attr->{alt}||'') . "\t" . $attr->{src} . "\t" . $servername . "\t" . $port . "\r\n";
            }

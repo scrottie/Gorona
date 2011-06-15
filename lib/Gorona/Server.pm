@@ -35,6 +35,7 @@ use Scalar::Util;
 use List::Util qw(sum max);
 use Text::Wrap;
 use Text::FIGlet;
+use URI;
 use Config;
 
 # figure out where the figlet fonts are
@@ -50,6 +51,7 @@ sub process_request {
     my $self = shift;
 
     my $fh = $self->{server}{client};
+    binmode $fh->[0], ':bytes';
 
     my $env = {
         REQUEST_METHOD => 'GET',
@@ -303,9 +305,10 @@ sub translate_html {
 
     my $servername = $env->{SERVER_NAME} or die;
     my $port = $env->{SERVER_PORT} or die;
+    my $path = $env->{PATH_INFO};
+    my $request_uri = $env->{REQUEST_URI};
 
     my $remoteaddr = $env->{REMOTE_ADDR} or die; #  XXX start using cookies or something for this in the future
-
 
     my $cb;
     my $output;
@@ -430,17 +433,17 @@ sub translate_html {
                $pending_href = $attr;
            } elsif( $tag eq '/a' and $pending_href ) {
                # XXX actually take the servername and port off of the href
+               # XXX normalize relative links
                my $href = $pending_href->{href};
                $pending_href = undef;
                return if $href =~ m/^#/;
-               # XXX normalize relative links
                my @text = split m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text);
                if( $href =~ m{^/} ) {
                    $output .= "1" . $_ . "\t" . $href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                } else {
-                   my $uri = URI->new($href);
+                   my $uri = URI->new_abs($href, "gopher://$servername:$port/$request_uri");    # treat it as a relative URL
                    if( $uri->host eq $servername ) {
-                       $output .= "1" . $_ . "\t" . $uri->path . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
+                       $output .= "1" . $_ . "\t" . $uri->path_query . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
                    } else {
                        # from http://gopher.quux.org:70/Archives/Mailing%20Lists/gopher/gopher.2002-02%3F/MBOX-MESSAGE/34 :
                        # Type -- the appropriate character corresponding to the type of the
@@ -449,11 +452,13 @@ sub translate_html {
                        #         URL:http://www.complete.org/
                        # Host, Port -- pointing back to the gopher server that provided
                        # the directory for compatibility reasons.
-                       $output .= "h" . $_ . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text;
+                       # $output .= "h" . $_ . "\t" . "URL:".$href . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text; # works pretty well!
+                       $output .= "h" . $_ . "\t" . "URL:".$uri->canonical . "\t" . $servername . "\t" . $port . "\t" . "?" . "\r\n" for @text; # give this a whirl
                    }
                }
                $pending_href = undef;
            } elsif( $tag eq 'img' and $attr->{src} ) {
+               # XXX make serving images work right
                $output .= "I" . $last_bit_of_text . ' ' . ($attr->{alt}||'') . "\t" . $attr->{src} . "\t" . $servername . "\t" . $port . "\r\n";
            }
 

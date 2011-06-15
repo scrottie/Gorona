@@ -397,7 +397,7 @@ sub translate_html {
                my $text = shift;
                $text =~ s{<!--.*?-->}{}sg; # JavaScript, mostly
                $text =~ s{\t}{    }sg;
-               return if $text =~ m/^\s*$/;
+               return if $text =~ m/^\s*\r?\n?$/;
 # warn "text: $text";
                $last_bit_of_text = $text;
                $last_bit_of_text =~ s{[\r\n\t]}{ }g;
@@ -431,6 +431,7 @@ sub translate_html {
            } elsif( $tag eq '/a' and $pending_href ) {
                # XXX actually take the servername and port off of the href
                my $href = $pending_href->{href};
+               $pending_href = undef;
                return if $href =~ m/^#/;
                # XXX normalize relative links
                my @text = split m/\r?\n/, Text::Wrap::wrap('', '', $last_bit_of_text);

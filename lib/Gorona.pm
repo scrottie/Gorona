@@ -54,5 +54,7 @@ at your option, any later version of Perl 5 you may have available.
 
 L<http://gopher.floodgap.com/overbite/> -- a Gopher plugin for Firefox
 
+L<http://backpan.perl.org/authors/id/W/WG/WGDAVIS/Net/Gopher/>
+
 A professional.
 
